@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Quantum Tunneling — Interactive Lab</title>
+<style>
+:root { --bg:#09121f; --surface:#101e30; --surface2:#14253a; --line:#273a50; --fg:#edf6ff; --muted:#9ab0c5; --teal:#58e5d0; --blue:#76baff; --gold:#ffbe71; --red:#ff987b; --shadow:0 20px 70px #02091475; }
+* { box-sizing:border-box; }
+body { margin:0; background:radial-gradient(ellipse at 78% -11%, #203e5c8a 0, transparent 45%),radial-gradient(ellipse at 3% 60%, #0b413648 0, transparent 38%),var(--bg); color:var(--fg); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.5; }
+button,input,select { font:inherit; }
+button { cursor:pointer; }
+button:focus-visible,input:focus-visible,select:focus-visible { outline:3px solid var(--blue);outline-offset:3px; }
+.app { width:min(1330px,calc(100% - 48px)); margin:0 auto; padding:38px 0 52px; }
+.header { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; margin-bottom:28px; }
+.eyebrow { color:var(--teal); letter-spacing:.17em; font-size:11px; text-transform:uppercase; font-weight:800; margin:0 0 8px; }
+h1 { font-size:clamp(30px,3.3vw,49px); letter-spacing:-.052em; line-height:1.11; margin:0 0 11px; font-weight:760; }
+.subtitle { max-width:750px; color:var(--muted); margin:0; font-size:14px; }
+.header-tag { border:1px solid #316b70; color:#91f4e2; border-radius:100px; padding:8px 13px; background:#113e413d; white-space:nowrap; font-weight:700; font-size:12px; margin-top:4px; }
+.layout { display:grid; grid-template-columns:310px minmax(0,1fr); align-items:start; gap:20px; }
+.panel { background:linear-gradient(160deg,#122337f2,#101c2eec); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); }
+.controls { padding:22px; }
+.section-header { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:17px; }
+h2 { font-size:17px; font-weight:720; letter-spacing:-.02em; margin:0; }
+h3 { font-size:14px; letter-spacing:-.01em; margin:0; }
+.helper { color:var(--muted); font-size:12px; }
+.control { padding:15px 0 14px; border-top:1px solid #28405691; }
+.control label,.control-label { font-size:13px; font-weight:650; color:#d7e7f6; }
+.control-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:11px; gap:12px; }
+.number-wrap { display:flex; align-items:center; padding:5px 8px; border:1px solid #395169; background:#0a1828; border-radius:9px; gap:4px; }
+.number-wrap input { width:62px; background:none; color:var(--fg); border:0; text-align:right; font-size:13px; font-variant-numeric:tabular-nums; outline:none; }
+.number-wrap input::-webkit-inner-spin-button { opacity:.35; }
+.unit { font-size:11px; color:var(--muted); }
+input[type="range"] { display:block; width:100%; height:19px; background:transparent; cursor:pointer; accent-color:var(--teal); }
+.extents { display:flex; justify-content:space-between; color:#7890a7; font-size:10px; margin-top:1px; }
+select { border:1px solid #38546b; background:#0a1828; color:var(--fg); width:100%; padding:11px 12px; border-radius:9px; }
+.custom-mass { margin-top:10px; }
+.custom-mass input { width:100%; border:1px solid #38546b; background:#0a1828; color:var(--fg); border-radius:9px; padding:9px 11px; }
+.preset-label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.12em; font-weight:750; margin:16px 0 10px; }
+.preset-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+.preset,.secondary { border:1px solid #355069; background:#1a3046; color:#dcecf9; border-radius:10px; padding:9px 10px; font-size:12px; font-weight:650; }
+.preset:hover,.secondary:hover { background:#25445f; }
+.preset.active { border-color:#72d6c2; background:#164843; color:#b0fff0; }
+.main { min-width:0; display:flex; flex-direction:column; gap:17px; }
+.viz { padding:18px 21px 16px; }
+.chart-head { display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:11px;margin-bottom:5px; }
+.legend { display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted); }
+.legend span { display:inline-flex;align-items:center;gap:6px; }
+.line-sample { width:16px;height:3px;background:var(--teal);border-radius:3px; }
+.line-sample.energy { background:var(--blue); }
+.line-sample.barrier { background:var(--gold); }
+.canvas { display:block;width:100%;height:205px; }
+.canvas.wave { height:260px; }
+.chart-foot { display:flex;justify-content:space-between;gap:10px;color:#8ca7bd;font-size:11px;margin-top:2px; flex-wrap:wrap; }
+.tabrow { display:flex;gap:6px;align-items:center;flex-wrap:wrap; }
+.tab { border:1px solid #304b64;border-radius:8px;background:#0a1b2e;color:#b9cfdf;padding:6px 10px;font-size:11px;font-weight:700; }
+.tab[aria-pressed="true"] { border-color:#489d9e;background:#174444;color:#b1fff0; }
+.check { display:flex;align-items:center;gap:5px;color:#b8cbdc;font-size:11px;cursor:pointer;margin-left:5px; }
+.check input { accent-color:var(--teal); }
+.result-panel { display:grid;grid-template-columns:1.2fr .8fr;gap:16px; }
+.hero { padding:20px 23px; }
+.small-top { color:#9fb6c9;font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:800; }
+.prob { color:var(--teal);font-size:clamp(30px,3.7vw,45px);font-weight:800;letter-spacing:-.045em;line-height:1.2; margin:10px 0 3px;font-variant-numeric:tabular-nums;white-space:nowrap; }
+.prob-unit { color:var(--muted);font-size:12px;min-height:20px; }
+.meter { margin:18px 0 10px; width:100%;height:8px;border-radius:10px;background:#253a4b;overflow:hidden; }
+.meter-fill { background:linear-gradient(90deg,#3b9fb5,var(--teal)); width:10%;height:100%;border-radius:10px;transition:width .2s ease; }
+.meter-labels { display:flex;justify-content:space-between;font-size:10px;color:#829aaf; }
+.metrics { padding:18px 20px; }
+.metric-row { display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #283d52;padding:9px 0;align-items:baseline; }
+.metric-row:last-child { border:0; }
+.metric-row .name { font-size:12px;color:#a9bfd0; }
+.metric-row .value { font-size:14px;color:#effaff;font-weight:700;font-variant-numeric:tabular-nums;text-align:right; }
+.insight { margin-top:16px;border-radius:12px;padding:12px 14px;background:#122e3d;border:1px solid #285b65; }
+.insight b { color:#a7fff0; font-size:12px; }
+.insight p { color:#b5cbd9;margin:4px 0 0;font-size:12px; }
+.bottom { display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-top:19px; }
+.trials,.explain { padding:22px; }
+.trial-actions { display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 15px; }
+.primary { background:#66e5d0;color:#073331;font-weight:800;border:0;border-radius:10px;padding:9px 13px;font-size:12px; }
+.primary:hover { background:#a1ffed; }
+.stats { display:flex;gap:22px;font-size:12px;color:#a5bfce;flex-wrap:wrap; }
+.stats strong { display:block;color:#eaf8ff;font-size:22px;letter-spacing:-.04em;font-variant-numeric:tabular-nums; }
+.dot-grid { display:grid;grid-template-columns:repeat(25,1fr);gap:5px;margin-top:15px;max-width:440px; }
+.dot { border-radius:50%;height:7px;width:7px;background:#df9a6c; }
+.dot.passed { background:#67e8d1; }
+.dots-empty { color:#819aae;font-size:12px;margin-top:15px; }
+.outcomes-note { color:#92a8ba;font-size:11px;margin-top:10px; }
+.explain p { font-size:12px;line-height:1.7;color:#aec3d4;margin:9px 0; }
+.formula { background:#071827;border:1px solid #304c61;border-radius:10px;padding:12px 15px;color:#d5f7ef;margin:15px 0;font-size:15px;letter-spacing:.01em;text-align:center; }
+.note { border-left:3px solid var(--gold);padding-left:12px;color:#c4bdac;font-size:12px;margin-top:13px; }
+.footer { font-size:12px;line-height:1.65;color:#829db0;margin-top:21px; }
+.hidden { display:none !important; }
+@media(max-width:1000px){ .layout { grid-template-columns:270px minmax(0,1fr); } .bottom {grid-template-columns:1fr;} }
+@media(max-width:730px){ .app{width:min(100% - 24px,600px);padding-top:22px;} .header{display:block;} .header-tag{display:inline-block;margin-top:16px;} .layout{grid-template-columns:1fr;} .result-panel{grid-template-columns:1fr;} .viz{padding:16px 12px 12px;} .canvas{height:184px;} .canvas.wave{height:235px;} h1{font-size:34px;} }
+@media(prefers-reduced-motion: reduce){ *,*::before,*::after { transition:none !important; } }
+
+/* Door challenge: a separate, macroscopic-scale experiment */
+.lab-tabs { display:flex;flex-wrap:wrap;gap:9px;margin:-5px 0 23px; }
+.lab-tab { display:flex;align-items:center;gap:10px;border:1px solid #304d64;background:#0e1e30;color:#c1d7e6;border-radius:12px;padding:12px 17px;font-size:13px;font-weight:750; }
+.lab-tab:hover { background:#1a334a; }
+.lab-tab[aria-pressed="true"] { color:#d7fff5;border-color:#5cc8b6;background:#16453f;box-shadow:inset 0 0 0 1px #43988766; }
+.door-title { margin:4px 0 5px;font-size:clamp(23px,2.6vw,31px);letter-spacing:-.035em; }
+.door-subtitle { color:var(--muted);font-size:13px;max-width:870px;margin:0 0 23px; }
+.door-layout { display:grid;grid-template-columns:310px minmax(0,1fr);gap:20px;align-items:start; }
+.door-controls { padding:22px; }
+.door-actions { display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:16px; }
+.door-control { padding:15px 0;border-top:1px solid #28405691; }
+.door-control .control-head { margin-bottom:10px; }
+.door-control .number-wrap input { width:83px; }
+.door-control-note { font-size:11px;color:#91afc0;margin:6px 0 0; }
+.door-control details { color:var(--muted);font-size:12px; }
+.door-control summary { cursor:pointer;color:#bed8e8;font-weight:700; }
+.door-results { display:flex;flex-direction:column;gap:16px;min-width:0; }
+.door-hero { padding:22px 26px;position:relative;overflow:hidden; }
+.door-hero::after { content:"";position:absolute;right:-60px;top:-70px;width:270px;height:270px;background:radial-gradient(circle,#2f92824d,transparent 65%);pointer-events:none; }
+.door-topline { display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap; }
+.door-pill { color:#bcdded;background:#193448;border:1px solid #31556b;font-size:11px;padding:5px 10px;border-radius:100px;font-weight:700; }
+.door-equation { font-size:clamp(20px,3.2vw,35px);font-weight:780;letter-spacing:-.04em;color:#6bf2d6;overflow-wrap:anywhere;line-height:1.35;margin:15px 0 2px;font-variant-numeric:tabular-nums; }
+.door-underhero { color:var(--muted);font-size:12px;margin:0; }
+.door-hero-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:21px; }
+.door-key { background:#0b2133;border:1px solid #2a475b;border-radius:12px;padding:15px 16px;min-width:0; }
+.door-key-label { color:#9ab5c7;font-size:11px;font-weight:700; }
+.door-key-value { color:#f2fbff;font-size:clamp(16px,2vw,24px);font-weight:750;letter-spacing:-.035em;overflow-wrap:anywhere;margin:5px 0;line-height:1.3; }
+.door-key-hint { color:#7fa6b7;font-size:10px; }
+.door-readouts { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+.door-readouts .panel { padding:19px 21px; }
+.door-readouts .metric-row { padding:8px 0; }
+.door-plot { padding:19px 20px 17px;min-width:0; }
+.door-plot .canvas { height:260px; }
+.door-plot-sub { color:#9bb3c5;font-size:12px;margin:9px 0 0;line-height:1.6; }
+.door-comparison { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px; }
+.door-comparison-item { border:1px solid #304b60;background:#0c1c2d;border-radius:11px;padding:12px; }
+.door-comparison-item strong { display:block;color:#d8e8f6;font-size:12px;margin-bottom:5px; }
+.door-comparison-item .compare-num { color:#78ead6;font-size:13px;font-variant-numeric:tabular-nums;font-weight:780;overflow-wrap:anywhere; }
+.door-explain { padding:21px 25px;margin-top:18px; }
+.door-steps { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 25px;margin-top:13px; }
+.door-step { border-top:1px solid #294058;padding-top:12px; }
+.door-step b { color:#dceffa;font-size:12px; }
+.door-step p { margin:7px 0;color:#b9cad7;font-size:12px;overflow-wrap:anywhere; }
+.door-step code { font:inherit;color:#7ee5d2; }
+.door-alert { border-left:3px solid var(--gold);background:#29221933;padding:13px 16px;margin-top:14px;border-radius:0 9px 9px 0;color:#cfbfb3;font-size:12px;line-height:1.7; }
+@media(max-width:1000px){.door-layout{grid-template-columns:270px minmax(0,1fr);} .door-comparison{grid-template-columns:1fr;} }
+@media(max-width:730px){.door-layout{grid-template-columns:1fr}.door-readouts{grid-template-columns:1fr}.door-hero-grid{grid-template-columns:1fr}.door-steps{grid-template-columns:1fr}.door-hero{padding:19px 17px}.door-plot{padding:16px 11px}.lab-tab{flex:1;justify-content:center;padding:11px}.door-comparison{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header class="header">
+  <div><p class="eyebrow">Interactive physics · idealized model</p><h1>Quantum tunneling lab<span style="color:var(--teal)">.</span></h1><p class="subtitle">Explore single-energy particles crossing potential barriers, then apply the same exponential approximation to the outrageous question: could someone tunnel through a classroom door?</p></div>
+  <span class="header-tag">Single-energy · No reflected wave</span>
+</header>
+<nav class="lab-tabs" aria-label="Choose experiment">
+  <button class="lab-tab" type="button" id="particleModeBtn" aria-pressed="true">⚛️ Particle tunneling lab</button>
+  <button class="lab-tab" type="button" id="doorModeBtn" aria-pressed="false">🚪 Tunneling through a door</button>
+</nav>
+<div id="particleLab">
+<div class="layout">
+<aside class="panel controls" aria-label="Simulation parameters">
+  <div class="section-header"><h2>Experiment controls</h2><button class="secondary" id="resetBtn">Reset</button></div>
+  <div class="control">
+    <div class="control-head"><label for="energyRange">Particle energy <em>E</em></label><div class="number-wrap"><input aria-label="Particle energy in electronvolts" id="energyNumber" type="number" min="0.1" max="12" step="0.05" value="3"><span class="unit">eV</span></div></div>
+    <input id="energyRange" aria-label="Particle energy slider" type="range" min="0.1" max="12" step="0.05" value="3"><div class="extents"><span>0.1 eV</span><span>12 eV</span></div>
+  </div>
+  <div class="control">
+    <div class="control-head"><label for="barrierRange">Barrier height <em>V₀</em></label><div class="number-wrap"><input aria-label="Barrier height in electronvolts" id="barrierNumber" type="number" min="0.2" max="12" step="0.05" value="5"><span class="unit">eV</span></div></div>
+    <input id="barrierRange" aria-label="Barrier height slider" type="range" min="0.2" max="12" step="0.05" value="5"><div class="extents"><span>0.2 eV</span><span>12 eV</span></div>
+  </div>
+  <div class="control">
+    <div class="control-head"><label for="widthRange">Barrier width <em>d</em></label><div class="number-wrap"><input aria-label="Barrier width in nanometers" id="widthNumber" type="number" min="0.02" max="1.5" step="0.01" value="0.25"><span class="unit">nm</span></div></div>
+    <input id="widthRange" aria-label="Barrier width slider" type="range" min="0.02" max="1.5" step="0.01" value="0.25"><div class="extents"><span>0.02 nm</span><span>1.50 nm</span></div>
+  </div>
+  <div class="control"><label for="massSelect">Particle mass</label><select id="massSelect" style="margin-top:10px"><option value="electron">Electron (1 mₑ)</option><option value="proton">Proton (1836.15 mₑ)</option><option value="custom">Custom mass</option></select><div class="custom-mass hidden" id="customMassWrap"><label for="customMass">Mass / electron mass</label><input type="number" id="customMass" min="0.05" max="5000" step="0.05" value="1"></div></div>
+  <p class="preset-label">Try a scenario</p>
+  <div class="preset-grid"><button class="preset" data-preset="easy">Easy passage</button><button class="preset" data-preset="deep">Thick barrier</button><button class="preset" data-preset="threshold">Near the top</button><button class="preset" data-preset="proton">Heavy particle</button></div>
+  <div class="insight"><b id="insightTitle">What to watch</b><p id="insightText">Increasing the barrier width reduces the transmitted fraction exponentially, even if the energy stays fixed.</p></div>
+</aside>
+<main class="main">
+  <section class="panel viz" aria-label="Potential energy diagram">
+    <div class="chart-head"><h2>1. Potential energy landscape</h2><div class="legend"><span><i class="line-sample energy"></i>Particle energy E</span><span><i class="line-sample barrier"></i>Barrier V₀</span></div></div>
+    <canvas class="canvas" id="potentialCanvas" role="img" aria-label="Potential energy as a function of position, with a rectangular barrier and the particle energy line"></canvas>
+    <div class="chart-foot"><span>Energy (eV) vs position (nm)</span><span id="barrierLabel">Barrier: 0.25 nm wide</span></div>
+  </section>
+  <section class="panel viz" aria-label="Wave and probability visualization">
+    <div class="chart-head"><h2>2. Inside the barrier</h2><div class="tabrow"><button class="tab" id="densityTab" aria-pressed="true">|ψ|² · density</button><button class="tab" id="waveTab" aria-pressed="false">Re(ψ) · wave</button><label class="check" id="logWrap"><input type="checkbox" id="logScale">Log scale</label><button class="tab hidden" id="pauseBtn">Pause</button></div></div>
+    <canvas class="canvas wave" id="waveCanvas" role="img" aria-label="Schematic relative probability density or real wave trace through the barrier"></canvas>
+    <div class="chart-foot"><span id="waveCaption">Stationary relative probability-density envelope · not spatially normalized</span><span id="waveLegend">Cyan: relative |ψ|²</span></div>
+  </section>
+  <div class="result-panel">
+    <section class="panel hero" aria-label="Transmission probability">
+      <div class="small-top">Estimated transmission T</div><div class="prob" id="transmission">5.55%</div><div class="prob-unit" id="probUnit">Chance of transmission per incident particle</div>
+      <div class="meter" role="progressbar" aria-label="Estimated transmission probability" aria-valuemin="0" aria-valuemax="100" aria-valuenow="5.55" id="probMeter"><div class="meter-fill" id="meterFill"></div></div><div class="meter-labels"><span>0% transmitted</span><span>100% transmitted</span></div>
+    </section>
+    <section class="panel metrics" aria-label="Computed parameters"><div class="small-top">Derived quantities</div><div class="metric-row"><span class="name">Decay constant κ</span><span class="value" id="kappaValue">—</span></div><div class="metric-row"><span class="name">Amplitude 1/e depth</span><span class="value" id="depthValue">—</span></div><div class="metric-row"><span class="name">Exponent 2κd</span><span class="value" id="expValue">—</span></div><div class="metric-row"><span class="name">log₁₀(T)</span><span class="value" id="logValue">—</span></div></section>
+  </div>
+</main>
+</div>
+<div class="bottom">
+  <section class="panel trials" aria-label="Random transmission experiments"><h2>3. Test it with identical particles</h2><p class="helper">Each trial uses the same definite energy E. Its transmitted/not-transmitted outcome is sampled from the same estimated probability T.</p><div class="trial-actions"><button class="primary" id="run100">Run 100 particles</button><button class="secondary" id="run1000">Run 1,000</button><button class="secondary" id="clearTrials">Clear trials</button></div><div class="stats"><div><strong id="trialCount">0</strong>Trials</div><div><strong id="transmittedCount">0</strong>Transmitted</div><div><strong id="observedRate">—</strong>Observed rate</div></div><div id="dotGrid" class="dot-grid" aria-label="Latest trial outcomes"></div><p class="dots-empty" id="dotsEmpty">Run a batch to see which particles make it through.</p><div class="outcomes-note" id="dotsNote">Teal = transmitted · Orange = not transmitted. No reflected wave is calculated.</div></section>
+  <section class="panel explain"><h2>4. The approximation being used</h2><div class="formula" id="formula">T ≈ e<sup>−2κd</sup> &nbsp; · &nbsp; κ = √[2m(V₀ − E)] / ℏ</div><p>When <b>E &lt; V₀</b>, the amplitude envelope <b>|ψ|</b> falls as <b>e<sup>−κx</sup></b> within the barrier; its relative probability density <b>|ψ|²</b> falls as <b>e<sup>−2κx</sup></b>. The single-energy density profile does not move with time.</p><p>At a distance <b>1/κ</b> inside the barrier, amplitude is <b>1/e ≈ 36.8%</b> of its value at the start, while relative density is <b>1/e² ≈ 13.5%</b>. The density's own 1/e distance is <b>1/(2κ)</b>.</p><div class="note" id="regimeNote">Deliberately simplified: neglects matching factors and interference at the two boundaries, calculates no reflected wave, and treats the transmitted amplitude as √T times the incident amplitude. It is especially unreliable near the barrier top.</div></section>
+</div>
+
+</div><!-- end particleLab -->
+<section id="doorLab" class="hidden" aria-labelledby="doorTitle">
+  <div class="eyebrow">The classroom door challenge · macroscopic tunneling</div>
+  <h2 id="doorTitle" class="door-title">Can a person tunnel through a door?</h2>
+  <p class="door-subtitle">Adjust the quantities to see probabilities far too small to write as ordinary decimals.</p>
+  <div class="door-layout">
+    <aside class="panel door-controls" aria-label="Door experiment inputs">
+      <div class="door-actions"><h2>Adjust parameters</h2><button type="button" class="secondary" id="doorReset">Reset</button></div>
+      <div class="door-control">
+        <div class="control-head"><label for="doorMassRange">Person's mass</label><div class="number-wrap"><input type="number" id="doorMassNumber" min="20" max="800" step="1" value="60" aria-label="Person mass in kilograms"><span class="unit">kg</span></div></div>
+        <input type="range" id="doorMassRange" min="20" max="800" step="1" value="60" aria-label="Mass slider in kilograms">
+        <div class="extents"><span>20 kg</span><span>800 kg</span></div><p class="door-control-note" id="doorPounds">≈132.3 pounds · mass, not weight force</p>
+      </div>
+      <div class="door-control">
+        <div class="control-head"><label for="doorSpeedRange">Walking / running speed</label><div class="number-wrap"><input type="number" id="doorSpeedNumber" min="0" max="50" step="0.1" value="2.5" aria-label="Speed in meters per second"><span class="unit">m/s</span></div></div>
+        <input type="range" id="doorSpeedRange" min="0" max="50" step="0.1" value="2.5" aria-label="Speed slider in meters per second">
+        <div class="extents"><span>Stationary</span><span>50 m/s</span></div><p class="door-control-note" id="doorSpeedMph">≈5.6 mph</p>
+      </div>
+      <div class="door-control">
+        <div class="control-head"><label for="doorThicknessRange">Door thickness</label><div class="number-wrap"><input type="number" id="doorThicknessNumber" min="0.1" max="30" step="0.1" value="3" aria-label="Door thickness in centimeters"><span class="unit">cm</span></div></div>
+        <input type="range" id="doorThicknessRange" min="0.1" max="30" step="0.1" value="3" aria-label="Door thickness slider in centimeters">
+        <div class="extents"><span>0.1 cm</span><span>30 cm</span></div><p class="door-control-note" id="doorThicknessMeters">=0.030 m</p>
+      </div>
+      <div class="door-control">
+        <details>
+          <summary>Advanced: change door barrier height</summary>
+          <div class="control-head" style="margin-top:15px"><label for="doorHeightNumber">Barrier potential V₀</label><div class="number-wrap"><input type="number" id="doorHeightNumber" min="100" max="100000" step="100" value="25000" aria-label="Door barrier energy in joules"><span class="unit">J</span></div></div>
+          <input type="range" id="doorHeightRange" min="100" max="100000" step="100" value="25000" aria-label="Barrier energy slider in joules">
+          <div class="extents"><span>100 J</span><span>100,000 J</span></div>
+        </details>
+      </div>
+      <div class="insight"><b>Why logarithms?</b><p>The probability is so small that ordinary software rounds e<sup>−9.82 × 10³⁵</sup> to zero. Its logarithm remains finite and meaningful.</p></div>
+    </aside>
+    <main class="door-results">
+      <section class="panel door-hero" aria-live="polite">
+        <div class="door-topline"><div class="small-top">Estimated transmission probability</div><span id="doorRegime" class="door-pill">Below the barrier: E &lt; V₀</span></div>
+        <div id="doorMainProbability" class="door-equation">T ≈ exp(−9.82 × 10³⁵)</div>
+        <p class="door-underhero" id="doorProbabilityDescription">Extremely small, but represented without rounding to zero.</p>
+        <div class="door-hero-grid">
+          <div class="door-key"><div class="door-key-label">Base-10 logarithm</div><div class="door-key-value" id="doorLog10">−4.26 × 10³⁵</div><div class="door-key-hint">log₁₀(T) = −2κd / ln(10)</div></div>
+          <div class="door-key"><div class="door-key-label">Equivalent odds</div><div class="door-key-value" id="doorOdds">1 in 10^(4.26 × 10³⁵)</div><div class="door-key-hint">Illustrative reciprocal: 1/T</div></div>
+        </div>
+      </section>
+      <div class="door-readouts">
+        <section class="panel" aria-label="Energy quantities"><div class="small-top">Energy comparison</div><div class="metric-row"><span class="name">Kinetic energy E = ½mv²</span><span class="value" id="doorEnergy">187.5 J</span></div><div class="metric-row"><span class="name">Barrier height V₀</span><span class="value" id="doorV0">25,000 J</span></div><div class="metric-row"><span class="name">Difference V₀ − E</span><span class="value" id="doorDelta">24,812.5 J</span></div><div class="metric-row"><span class="name">Classical threshold speed</span><span class="value" id="doorThreshold">28.9 m/s</span></div></section>
+        <section class="panel" aria-label="Exponential quantities"><div class="small-top">Quantum quantities</div><div class="metric-row"><span class="name">κ (decay constant)</span><span class="value" id="doorKappa">—</span></div><div class="metric-row"><span class="name">1/κ (amplitude 1/e depth)</span><span class="value" id="doorDepth">—</span></div><div class="metric-row"><span class="name">Exponent in e<sup>−2κd</sup></span><span class="value" id="doorExponent">—</span></div><div class="metric-row"><span class="name">log₁₀(T)</span><span class="value" id="doorLog10Small">—</span></div></section>
+      </div>
+      <section class="panel door-plot" aria-label="Logarithmic probability versus thickness"><div class="chart-head"><h2>How thickness changes log₁₀(T)</h2><div class="legend"><span><i class="line-sample"></i>Log₁₀ transmission</span><span><i class="line-sample barrier"></i>Current door</span></div></div><canvas id="doorGraph" class="canvas" role="img" aria-label="Graph showing the base-10 logarithm of tunneling probability against door thickness"></canvas><div class="chart-foot"><span>Horizontal axis: door thickness (cm)</span><span id="doorGraphTag">Marker = your current thickness</span></div><p class="door-plot-sub">For fixed mass, speed, and barrier height, <strong>log₁₀(T)</strong> is a straight line versus thickness. Doubling thickness doubles the size of the negative exponent.</p></section>
+    </main>
+  </div>
+  <section class="panel door-explain" aria-label="Worked substitution and insights">
+    <h2>Following the calculation</h2>
+    <div class="door-steps">
+      <div class="door-step"><b>1. Calculate kinetic energy</b><p id="doorStepEnergy">E = ½mv² = 187.5 J</p></div>
+      <div class="door-step"><b>2. Determine the decay constant</b><p>κ = √[2m(V₀ − E)] / ℏ</p><p id="doorStepKappa">κ = 1.64 × 10³⁷ m⁻¹</p></div>
+      <div class="door-step"><b>3. Exponentiate without underflow</b><p>T ≈ e<sup>−2κd</sup> and ln(T) = −2κd</p><p id="doorStepNatural">ln(T) = −9.82 × 10³⁵</p></div>
+      <div class="door-step"><b>4. Convert to base 10</b><p>log₁₀(T) = ln(T) / ln(10)</p><p id="doorStepBase10">log₁₀(T) = −4.26 × 10³⁵</p></div>
+    </div>
+    <div class="door-alert" id="doorLimit">This extends the <b>same toy single-particle formula</b> to a whole person's center of mass. A real person is not a coherent, isolated single particle; internal structure and environmental decoherence are omitted, along with boundary matching and reflected waves. The result is a mathematical illustration, <b>not a realistic probability of walking through a door</b>.</div>
+  </section>
+</section>
+<footer class="footer">This is a conceptual teaching simulator, not an exact Schrödinger-equation solution. The plots depict idealized envelopes, not a spatially normalized probability distribution. The door example is not a physically realistic model of a person. The animated real-part trace, when enabled, slows phase evolution for visibility; it is not a moving wave packet. No internet connection, external libraries, or installation is needed.</footer>
+</div>
+<script>
+(()=>{'use strict';
+const $=(id)=>document.getElementById(id);
+const COLORS={grid:'#274055',muted:'#90a9bd',white:'#edf6ff',teal:'#58e5d0',blue:'#76baff',gold:'#ffbe71'};
+const ELECTRON_MASS=9.1093837139e-31, EV=1.602176634e-19, HBAR=1.054571817e-34;
+// kappa [nm^-1] = sqrt(2 m (V0-E)*eV)/hbar * 1e-9.
+const NM_FACTOR=Math.sqrt(2*ELECTRON_MASS*EV)/HBAR*1e-9;
+const defaults={E:3,V0:5,d:.25,massChoice:'electron',customMass:1};
+const state={...defaults,mode:'density',log:false,playing:!matchMedia('(prefers-reduced-motion: reduce)').matches,phase:0,trialCount:0,passed:0,recent:[]};
+let lastTime=0;
+function clamp(n,min,max){return Math.min(max,Math.max(min,n));}
+function massRatio(){return state.massChoice==='proton'?1836.15267343:state.massChoice==='custom'?state.customMass:1;}
+function model(){const under=state.E<state.V0, m=massRatio(); const kappa=under?NM_FACTOR*Math.sqrt(m*(state.V0-state.E)):0;const exponent=2*kappa*state.d;const T=under?Math.exp(-exponent):1;const logT=under?-exponent/Math.LN10:0;return {under,m,kappa,exponent,T,logT,k:NM_FACTOR*Math.sqrt(m*state.E),kInside:under?0:NM_FACTOR*Math.sqrt(m*Math.max(state.E-state.V0,0))};}
+function round(n,d=2){if(!Number.isFinite(n))return '—';if(n===0)return '0';if(Math.abs(n)>=1e4 || Math.abs(n)<.001)return n.toExponential(2);return n.toLocaleString('en-US',{maximumFractionDigits:d});}
+function updateControls(){for(const [key,id] of [['E','energy'],['V0','barrier'],['d','width']]){$(id+'Range').value=state[key];$(id+'Number').value=state[key];} $('massSelect').value=state.massChoice;$('customMass').value=state.customMass;$('customMassWrap').classList.toggle('hidden',state.massChoice!=='custom');}
+function renderNumbers(){const m=model();let str,unit;if(!m.under){str='100%';unit='Idealized no-reflection assumption (E ≥ V₀)';}else if(m.T*100>=.0001){str=(m.T*100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:Math.abs(m.T*100)<.01?4:2})+'%';unit='Approximate chance of transmission per incident particle';}else {str='10'+toSuperscript(m.logT.toFixed(1));unit='Transmission probability as a fraction (very small)';}
+$('transmission').textContent=str;$('probUnit').textContent=unit; $('meterFill').style.width=(100*m.T)+'%';$('probMeter').setAttribute('aria-valuenow',String(100*m.T));
+$('kappaValue').textContent=m.under?round(m.kappa,3)+' nm⁻¹':'not applicable';$('depthValue').textContent=m.under?round(1/m.kappa,3)+' nm':'not applicable';$('expValue').textContent=m.under?round(m.exponent,3):'not applicable';$('logValue').textContent=round(m.logT,2);
+$('barrierLabel').textContent='Barrier: '+round(state.d,2)+' nm wide';
+$('insightTitle').textContent=m.under?'Below the barrier: E < V₀':'Above or at the barrier: E ≥ V₀';
+$('insightText').textContent=m.under?`The density shrinks by a factor of e (about 2.72) every ${round(1/(2*m.kappa),3)} nm. Doubling d doubles the exponent, not the probability.`:'This exponential tunneling formula no longer applies. For visualization only, the toy model assumes no reflection and sets T = 100%.';
+$('regimeNote').textContent=m.under?'Deliberately simplified: ignores boundary-matching factors and interference, computes no reflected wave, and treats the outgoing wave amplitude as √T times the incident amplitude. Near E = V₀, this approximation may be particularly inaccurate.':'For E ≥ V₀, there is no classically forbidden region. The simulator deliberately assumes 100% transmission, though a real finite potential step or barrier can still cause quantum reflection.';
+$('formula').innerHTML=m.under?'T ≈ e<sup>−2κd</sup> &nbsp; · &nbsp; κ = √[2m(V₀ − E)] / ℏ':'E ≥ V₀ &nbsp; → &nbsp; T = 1 <small>(toy assumption)</small>';
+}
+function toSuperscript(s){const map={'-':'⁻','.':'·','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};return [...s].map(c=>map[c]||c).join('');}
+function clearTrials(){state.trialCount=0;state.passed=0;state.recent=[];renderTrials();}
+function renderTrials(){$('trialCount').textContent=state.trialCount.toLocaleString();$('transmittedCount').textContent=state.passed.toLocaleString();$('observedRate').textContent=state.trialCount?(100*state.passed/state.trialCount).toFixed(2)+'%':'—';$('dotsEmpty').classList.toggle('hidden',state.trialCount>0);$('dotGrid').innerHTML=state.recent.map(p=>'<span class="dot'+(p?' passed':'')+'" title="'+(p?'Transmitted':'Not transmitted')+'"></span>').join('');$('dotsNote').textContent=state.trialCount?'Last '+state.recent.length+' outcomes shown · Teal = transmitted · Orange = not transmitted. No reflected wave is calculated.':'Teal = transmitted · Orange = not transmitted. No reflected wave is calculated.';}
+function trials(n){const p=model().T;let count=0;for(let i=0;i<n;i++){const passed=Math.random()<p;if(passed)count++;state.recent.push(passed);}state.trialCount+=n;state.passed+=count;if(state.recent.length>125)state.recent=state.recent.slice(-125);renderTrials();}
+function update(){renderNumbers();clearTrials();drawAll();document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));}
+function wirePair(key,id,min,max){$(id+'Range').addEventListener('input',e=>{state[key]=Number(e.target.value);$(id+'Number').value=state[key];update();});$(id+'Number').addEventListener('change',e=>{const x=Number(e.target.value);state[key]=clamp(Number.isFinite(x)?x:defaults[key],min,max);$(id+'Range').value=state[key];$(id+'Number').value=state[key];update();});}
+wirePair('E','energy',.1,12);wirePair('V0','barrier',.2,12);wirePair('d','width',.02,1.5);
+$('massSelect').addEventListener('change',e=>{state.massChoice=e.target.value;updateControls();update();});$('customMass').addEventListener('change',e=>{state.customMass=clamp(Number(e.target.value)||1,.05,5000);updateControls();update();});
+$('resetBtn').addEventListener('click',()=>{Object.assign(state,defaults);updateControls();update();});
+const presets={easy:{E:4.5,V0:5,d:.12,massChoice:'electron'},deep:{E:2,V0:7,d:.68,massChoice:'electron'},threshold:{E:4.95,V0:5,d:.25,massChoice:'electron'},proton:{E:3,V0:5,d:.25,massChoice:'proton'}};
+document.querySelectorAll('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>{Object.assign(state,presets[btn.dataset.preset]);updateControls();update();btn.classList.add('active');}));
+$('run100').addEventListener('click',()=>trials(100));$('run1000').addEventListener('click',()=>trials(1000));$('clearTrials').addEventListener('click',clearTrials);
+function setMode(mode){state.mode=mode;$('densityTab').setAttribute('aria-pressed',mode==='density');$('waveTab').setAttribute('aria-pressed',mode==='wave');$('logWrap').classList.toggle('hidden',mode==='wave');$('pauseBtn').classList.toggle('hidden',mode!=='wave');$('waveCaption').textContent=mode==='density'?'Stationary relative probability-density envelope · not spatially normalized':'Schematic real part of a single-energy wave · phase speed deliberately slowed';$('waveLegend').textContent=mode==='density'?'Cyan: relative |ψ|²':'Cyan: Re(ψ) · dashed: ±amplitude envelope';drawAll();}
+$('densityTab').addEventListener('click',()=>setMode('density'));$('waveTab').addEventListener('click',()=>setMode('wave'));$('logScale').addEventListener('change',e=>{state.log=e.target.checked;drawAll();});
+$('pauseBtn').addEventListener('click',()=>{state.playing=!state.playing;$('pauseBtn').textContent=state.playing?'Pause':'Play';});$('pauseBtn').textContent=state.playing?'Pause':'Play';
+function ctxFor(canvas){const dpr=Math.min(2,window.devicePixelRatio||1),rect=canvas.getBoundingClientRect(),w=Math.max(1,rect.width),h=Math.max(1,rect.height),W=Math.round(w*dpr),H=Math.round(h*dpr);if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);return {ctx,w,h};}
+function text(ctx,s,x,y,color=COLORS.muted,font='11px system-ui',align='left'){ctx.fillStyle=color;ctx.font=font;ctx.textAlign=align;ctx.fillText(s,x,y);ctx.textAlign='left';}
+function line(ctx,x1,y1,x2,y2,color,width=1,dash=[]){ctx.beginPath();ctx.setLineDash(dash);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);}
+function graphGeometry(w,h){const pad=Math.max(.4,state.d*.68);const left=58,right=w-22,top=24,bottom=h-36,xMin=-pad,xMax=state.d+pad;return{left,right,top,bottom,xMin,xMax,X(x){return left+(x-xMin)/(xMax-xMin)*(right-left);}};}
+function grid(ctx,g,vals,map,labelText){for(const v of vals){const y=map(v);line(ctx,g.left,y,g.right,y,COLORS.grid,.75,[3,5]);text(ctx,labelText(v),g.left-9,y+4,COLORS.muted,'10px system-ui','right');}line(ctx,g.left,g.top,g.left,g.bottom,'#476077');line(ctx,g.left,g.bottom,g.right,g.bottom,'#476077');}
+function xTicks(ctx,g){const x0=g.X(0),xd=g.X(state.d);line(ctx,x0,g.bottom,x0,g.bottom+5,'#89a1b5');line(ctx,xd,g.bottom,xd,g.bottom+5,'#89a1b5');if(xd-x0>70){text(ctx,'0',x0,g.bottom+17,COLORS.muted,'10px system-ui','center');text(ctx,round(state.d,2),xd,g.bottom+17,COLORS.muted,'10px system-ui','center');}else{text(ctx,'0 → '+round(state.d,2)+' nm',(x0+xd)/2,g.bottom+17,COLORS.muted,'10px system-ui','center');}text(ctx,'x (nm)',g.right,g.bottom+17,COLORS.muted,'10px system-ui','right');}
+function drawPotential(){const {ctx,w,h}=ctxFor($('potentialCanvas'));const g=graphGeometry(w,h),Vmax=Math.max(state.E,state.V0,1)*1.22,Y=v=>g.bottom-(v/Vmax)*(g.bottom-g.top);grid(ctx,g,[0,Vmax*.25,Vmax*.5,Vmax*.75,Vmax],Y,v=>round(v,1));const x0=g.X(0),xd=g.X(state.d);ctx.fillStyle='#ffbe711b';ctx.fillRect(x0,Y(state.V0),xd-x0,g.bottom-Y(state.V0));line(ctx,x0,g.top,x0,g.bottom,'#ffbe712e',1,[3,5]);line(ctx,xd,g.top,xd,g.bottom,'#ffbe712e',1,[3,5]);ctx.strokeStyle=COLORS.gold;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(g.left,g.bottom);ctx.lineTo(x0,g.bottom);ctx.lineTo(x0,Y(state.V0));ctx.lineTo(xd,Y(state.V0));ctx.lineTo(xd,g.bottom);ctx.lineTo(g.right,g.bottom);ctx.stroke();line(ctx,g.left,Y(state.E),g.right,Y(state.E),COLORS.blue,1.9,[8,6]);text(ctx,'E = '+round(state.E,2)+' eV',g.right-2,Y(state.E)-9,COLORS.blue,'bold 11px system-ui','right');if(xd-x0>65)text(ctx,'V₀', (x0+xd)/2,Y(state.V0)-9,COLORS.gold,'bold 11px system-ui','center');xTicks(ctx,g);}
+function drawWave(){const {ctx,w,h}=ctxFor($('waveCanvas'));const g=graphGeometry(w,h),m=model(),x0=g.X(0),xd=g.X(state.d);ctx.fillStyle='#ffbe710f';ctx.fillRect(x0,g.top,xd-x0,g.bottom-g.top);line(ctx,x0,g.top,x0,g.bottom,'#ffbe714b',1,[3,4]);line(ctx,xd,g.top,xd,g.bottom,'#ffbe714b',1,[3,4]);
+const envelope=(x)=>{if(!m.under)return 1;if(x<0)return 1;if(x<state.d)return Math.exp(-m.kappa*x);return Math.exp(-m.exponent/2);};
+if(state.mode==='density'){
+ const ymax=1.06,logMin=-12;
+ const Y=p=>state.log?g.bottom-(clamp(Math.log10(Math.max(p,1e-100)),logMin,0)-logMin)/(-logMin)*(g.bottom-g.top):g.bottom-p/ymax*(g.bottom-g.top);
+ const ticks=state.log?[-12,-9,-6,-3,0]:[0,.25,.5,.75,1];grid(ctx,g,ticks,Y,v=>state.log?'10'+toSuperscript(v.toString()):v.toFixed(v===0?0:2));
+ const values=[];for(let px=g.left;px<=g.right;px+=2){const x=g.xMin+(px-g.left)/(g.right-g.left)*(g.xMax-g.xMin);const e=envelope(x);values.push([px,Y(e*e)]);}values.push([g.right,Y(envelope(g.xMax)**2)]);
+ ctx.beginPath();ctx.moveTo(values[0][0],g.bottom);for(const [px,y] of values)ctx.lineTo(px,y);ctx.lineTo(g.right,g.bottom);ctx.closePath();const grad=ctx.createLinearGradient(0,g.top,0,g.bottom);grad.addColorStop(0,'#5be8d250');grad.addColorStop(1,'#5be8d204');ctx.fillStyle=grad;ctx.fill();ctx.strokeStyle=COLORS.teal;ctx.lineWidth=2.6;ctx.beginPath();values.forEach(([px,y],i)=>i?ctx.lineTo(px,y):ctx.moveTo(px,y));ctx.stroke();
+ if(m.under){const end=Math.exp(-m.exponent); const yd=Y(end);if(xd-x0>60&&yd>g.top+12&&yd<g.bottom-8)text(ctx,'T',Math.min(g.right-8,xd+7),yd-7,COLORS.teal,'bold 11px system-ui');}
+ }else{
+ const mid=(g.top+g.bottom)/2,amp=(g.bottom-g.top)*.43,Y=a=>mid-a*amp;grid(ctx,g,[-1,-.5,0,.5,1],Y,v=>v.toFixed(v===0?0:1));
+ for(const mult of [-1,1]){ctx.strokeStyle='#58e5d080';ctx.lineWidth=1.2;ctx.setLineDash([5,5]);ctx.beginPath();for(let px=g.left;px<=g.right;px+=2){const x=g.xMin+(px-g.left)/(g.right-g.left)*(g.xMax-g.xMin),y=Y(mult*envelope(x));px===g.left?ctx.moveTo(px,y):ctx.lineTo(px,y);}ctx.stroke();ctx.setLineDash([]);}
+ // A single-energy spatial eigenfunction times a globally rotating phase. Wavevectors are
+ // visually capped to avoid aliasing for large masses; this chart is expressly schematic.
+ const k=Math.min(m.k,30),kIn=Math.min(m.kInside,30);
+ function realWave(x){const a=envelope(x);if(x<0)return a*Math.cos(k*x-state.phase);if(x<state.d)return m.under?a*Math.cos(-state.phase):Math.cos(kIn*x-state.phase);return a*Math.cos((m.under?0:kIn*state.d)+k*(x-state.d)-state.phase);}
+ ctx.strokeStyle=COLORS.teal;ctx.lineWidth=2.4;ctx.beginPath();for(let px=g.left;px<=g.right;px+=1.6){const x=g.xMin+(px-g.left)/(g.right-g.left)*(g.xMax-g.xMin),y=Y(realWave(x));px===g.left?ctx.moveTo(px,y):ctx.lineTo(px,y);}ctx.stroke();
+ }
+ xTicks(ctx,g);
+}
+function drawAll(){drawPotential();drawWave();}
+function frame(time){if(lastTime&&state.playing){const elapsed=Math.min(.05,(time-lastTime)/1000);state.phase+=elapsed*3.1;if(state.mode==='wave')drawWave();}lastTime=time;requestAnimationFrame(frame);}
+
+// Door mode uses SI units; logarithms are calculated directly, so tiny T values never underflow.
+const doorDefaults={mass:60,speed:2.5,thickness:3,height:25000};
+const door={...doorDefaults};
+function fmtSci(n,digits=3){
+ if(!Number.isFinite(n))return '—';
+ if(n===0)return '0';
+ const sign=n<0?'−':'';
+ const a=Math.abs(n),exp=Math.floor(Math.log10(a));
+ if(exp>=4||exp<=-3){
+   const mant=a/Math.pow(10,exp);
+   return sign+mant.toFixed(digits-1)+' × 10'+toSuperscript(String(exp));
+ }
+ return sign+a.toLocaleString('en-US',{maximumFractionDigits:3});
+}
+function fmtNumber(n,digits=2){return Number(n).toLocaleString('en-US',{maximumFractionDigits:digits});}
+function doorCompute(mass=door.mass,speed=door.speed,thickness=door.thickness,height=door.height){
+ const E=.5*mass*speed*speed,delta=height-E,under=delta>0;
+ const kappa=under?Math.sqrt(2*mass*delta)/HBAR:0;
+ const exponent=2*kappa*(thickness/100);
+ const logT=under?-exponent/Math.LN10:0;
+ const T=under?(exponent<744?Math.exp(-exponent):0):1;
+ return {E,delta,under,kappa,exponent,logT,T,threshold:Math.sqrt(2*height/mass)};
+}
+function updateDoorInputs(){for(const [key,label] of [['mass','doorMass'],['speed','doorSpeed'],['thickness','doorThickness'],['height','doorHeight']]){$(label+'Range').value=door[key];$(label+'Number').value=door[key];}}
+function updateDoor(){
+ const q=doorCompute();
+ $('doorPounds').textContent='≈ '+fmtNumber(door.mass*2.2046226218,1)+' pounds · mass, not weight force';
+ $('doorSpeedMph').textContent='≈ '+fmtNumber(door.speed*2.2369362921,1)+' mph';
+ $('doorThicknessMeters').textContent='= '+(door.thickness/100).toFixed(3)+' m';
+ $('doorEnergy').textContent=fmtNumber(q.E,1)+' J';$('doorV0').textContent=fmtNumber(door.height,0)+' J';
+ $('doorDelta').textContent=fmtNumber(q.delta,1)+' J';$('doorThreshold').textContent=fmtNumber(q.threshold,2)+' m/s';
+ $('doorKappa').textContent=q.under?fmtSci(q.kappa,3)+' m⁻¹':'not applicable';
+ $('doorDepth').textContent=q.under?fmtSci(1/q.kappa,3)+' m':'not applicable';
+ $('doorExponent').textContent=q.under?fmtSci(q.exponent,3):'not applicable';
+ $('doorLog10Small').textContent=fmtSci(q.logT,3);
+ $('doorStepEnergy').textContent='E = ½ × '+fmtNumber(door.mass,0)+' kg × ('+fmtNumber(door.speed,1)+' m/s)² = '+fmtNumber(q.E,1)+' J';
+ $('doorStepKappa').textContent=q.under?'κ = '+fmtSci(q.kappa,3)+' m⁻¹':'κ is not real for a classically allowed region; do not use the barrier-decay equation.';
+ $('doorStepNatural').textContent=q.under?'ln(T) = '+fmtSci(-q.exponent,3):'In this toy model: ln(T) = 0';
+ $('doorStepBase10').textContent='log₁₀(T) = '+fmtSci(q.logT,3);
+ if(!q.under){
+   $('doorRegime').textContent='At or above the barrier: E ≥ V₀';
+   $('doorMainProbability').textContent='T = 1 (100%)';
+   $('doorProbabilityDescription').textContent='Simplified assumption: full transmission for E ≥ V₀, without quantum reflection.';
+   $('doorLog10').textContent='0';$('doorOdds').textContent='1 in 1';
+ }else{
+   $('doorRegime').textContent='Below the barrier: E < V₀';
+   $('doorMainProbability').textContent='T ≈ exp('+fmtSci(-q.exponent,3)+')';
+   $('doorLog10').textContent=fmtSci(q.logT,3);
+   $('doorOdds').textContent='1 in 10^('+fmtSci(-q.logT,3)+')';
+   $('doorProbabilityDescription').textContent=q.exponent>744?'Exponent form preserves the probability; evaluating exp(−2κd) directly would underflow to 0.':'≈ '+fmtSci(q.T,3)+' as a fraction (not percent)';
+ }
+ $('doorGraphTag').textContent='Current door: '+fmtNumber(door.thickness,2)+' cm';
+ drawDoorGraph();
+}
+function doorWirePair(key,stem,min,max,step){
+ $(stem+'Range').addEventListener('input',e=>{door[key]=Number(e.target.value);$(stem+'Number').value=door[key];updateDoor();});
+ $(stem+'Number').addEventListener('change',e=>{const val=Number(e.target.value),n=e.target.value.trim()!==''&&Number.isFinite(val)?val:doorDefaults[key];door[key]=clamp(n,min,max);$(stem+'Range').value=door[key];$(stem+'Number').value=door[key];updateDoor();});
+}
+doorWirePair('mass','doorMass',20,800,1);
+doorWirePair('speed','doorSpeed',0,50,.1);
+doorWirePair('thickness','doorThickness',.1,30,.1);
+doorWirePair('height','doorHeight',100,100000,100);
+function doorPreset(values){Object.assign(door,doorDefaults,values);updateDoorInputs();updateDoor();}
+$('doorReset').addEventListener('click',()=>doorPreset({}));
+function drawDoorGraph(){
+ const {ctx,w,h}=ctxFor($('doorGraph'));
+ if(w<10)return;
+ const left=85,right=w-22,top=27,bottom=h-43,plotW=right-left,plotH=bottom-top;
+ const xMax=Math.max(1,door.thickness*2.2),base=doorCompute(),end=doorCompute(door.mass,door.speed,xMax,door.height);
+ // Normalize y position by the (large) log value itself; this avoids catastrophic underflow.
+ const maxMagnitude=Math.max(1,Math.abs(end.logT)),X=x=>left+(x/xMax)*plotW,Y=v=>top+(Math.abs(v)/maxMagnitude)*plotH;
+ for(let i=0;i<=4;i++){
+    const frac=i/4,v=-maxMagnitude*frac,y=top+frac*plotH;
+    line(ctx,left,y,right,y,COLORS.grid,1,[3,5]);
+    text(ctx,fmtSci(v,2),left-12,y+4,COLORS.muted,'10px system-ui','right');
+ }
+ line(ctx,left,top,left,bottom,'#4b667b',1.1);line(ctx,left,bottom,right,bottom,'#4b667b',1.1);
+ for(let i=0;i<=4;i++){const x=xMax*i/4,xp=X(x);line(ctx,xp,bottom,xp,bottom+5,'#6a899f');text(ctx,fmtNumber(x,1),xp,bottom+17,COLORS.muted,'10px system-ui','center');}
+ text(ctx,'thickness (cm)',right,bottom+32,COLORS.muted,'10px system-ui','right');
+ text(ctx,'log₁₀(T)',left,top-10,COLORS.muted,'bold 11px system-ui');
+ ctx.beginPath();ctx.moveTo(left,Y(0));ctx.lineTo(right,Y(end.logT));ctx.strokeStyle=COLORS.teal;ctx.lineWidth=2.7;ctx.stroke();
+ const x0=X(door.thickness),y0=Y(base.logT);
+ line(ctx,x0,top,x0,bottom,'#ffbe7180',1.4,[5,5]);
+ ctx.beginPath();ctx.arc(x0,y0,5.4,0,Math.PI*2);ctx.fillStyle=COLORS.gold;ctx.fill();ctx.strokeStyle='#1a2837';ctx.lineWidth=2;ctx.stroke();
+ const yLabel=y0>bottom-22?y0-13:y0+18;
+ text(ctx,'Your door',x0+(x0>right-85?-10:9),yLabel,COLORS.gold,'bold 11px system-ui',x0>right-85?'right':'left');
+}
+function setLab(which){
+ const isDoor=which==='door';
+ $('particleLab').classList.toggle('hidden',isDoor);
+ $('doorLab').classList.toggle('hidden',!isDoor);
+ $('doorModeBtn').setAttribute('aria-pressed',String(isDoor));
+ $('particleModeBtn').setAttribute('aria-pressed',String(!isDoor));
+ if(isDoor)updateDoor();else drawAll();
+}
+$('particleModeBtn').addEventListener('click',()=>setLab('particle'));
+$('doorModeBtn').addEventListener('click',()=>setLab('door'));
+window.addEventListener('resize',()=>{if(!$('doorLab').classList.contains('hidden'))drawDoorGraph();});
+updateDoorInputs();
+
+updateControls();renderNumbers();renderTrials();setMode('density');requestAnimationFrame(frame);window.addEventListener('resize',drawAll);
+})();
+</script>
+</body>
+</html>
